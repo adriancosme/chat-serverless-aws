@@ -1,0 +1,13 @@
+{
+  "queryStringParameters": {
+    "userId": 2
+  },
+  "requestContext": {
+    "connectionId": "as2da2cx",
+    "routeKey": "$connect"
+  },
+  "body": {
+    "userId": 2,
+    "id_user_to": 2
+  }
+}

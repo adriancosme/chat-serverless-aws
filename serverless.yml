@@ -1,0 +1,92 @@
+service: aws-sincelove-chat
+frameworkVersion: "3"
+package:
+  exclude:
+    - node_modules/aws-sdk/**
+
+custom:
+  configFile: ${file(./config/${sls:stage}.yaml)}
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'development'}
+  region: us-west-1
+  environment:
+    TABLE_NAME: "${self:custom.configFile.TABLE}"
+    QUEUE_TABLE: "${self:custom.configFile.QUEUE_TABLE}"
+    MONGODB_URI: "${self:custom.configFile.MONGODB_URI}"
+    DATABASE: "${self:custom.configFile.DATABASE}"
+    API_KEY: "${self:custom.configFile.API_KEY}"
+    API_MESSAGING: "${self:custom.configFile.API_MESSAGING}"
+    API_SINCELOVE: "${self:custom.configFile.API_SINCELOVE}"
+  websocketsApiRouteSelectionExpression: "$request.body.action"
+
+functions:
+  customer-handler:
+    handler: src/customer/customer.handler
+    events:
+      - http:
+          method: get
+          path: get-customer
+          cors:
+            origin: "*" # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Requested-With
+            allowCredentials: false
+  queue-handler:
+    handler: src/customer/queue.handler
+    events:
+      - http:
+          method: get
+          path: queue-information
+          cors:
+            origin: "*" # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Requested-With
+            allowCredentials: false
+  delete-queue-handler:
+    handler: src/customer/delete-queue.handler
+    events:
+      - http:
+          method: delete
+          path: queue/{room}
+          cors:
+            origin: "*" # <-- Specify allowed origin
+            headers: # <-- Specify allowed headers
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Requested-With
+            allowCredentials: false
+  chat-handler:
+    handler: src/messages-websocket/handler.handler
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+      - websocket:
+          route: setUserId
+      - websocket:
+          route: sendMessage
+      - websocket:
+          route: messageRead
+      - websocket:
+          route: userTyping
+    timeout: 10
