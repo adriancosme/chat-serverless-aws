@@ -20,6 +20,8 @@ provider:
     API_KEY: "${self:custom.configFile.API_KEY}"
     API_MESSAGING: "${self:custom.configFile.API_MESSAGING}"
     API_SINCELOVE: "${self:custom.configFile.API_SINCELOVE}"
+    ONE_SIGNAL_API_KEY: "${self:custom.configFile.ONE_SIGNAL_API_KEY}"
+    ONE_SIGNAL_APP_ID: "${self:custom.configFile.ONE_SIGNAL_APP_ID}"
   websocketsApiRouteSelectionExpression: "$request.body.action"
 
 functions:
