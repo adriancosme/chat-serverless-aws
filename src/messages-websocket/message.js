@@ -83,7 +83,7 @@ async function saveToQueue(payload) {
 }
 let user_to = null;
 module.exports.sendMessageHandler = async function (payload, meta) {
-  console.log("sendMessageHandler");
+  console.log("sendMessageHandler", payload);
   const apiGateway = new ApiGatewayManagementApi({
     endpoint: `${meta.domain}/${meta.stage}`,
   });
@@ -103,7 +103,6 @@ module.exports.sendMessageHandler = async function (payload, meta) {
       userId: id_user_to,
     };
     user_to = await db.collection(TABLE_CONNECTIONS).findOne(filter);
-    console.log("user_to", user_to);
   } catch (error) {
     console.error(`Error trying to get user to ${JSON.stringify(error)}`);
   }
@@ -128,7 +127,7 @@ module.exports.sendMessageHandler = async function (payload, meta) {
       }
 
       try {
-        console.log("postToConnection", user_to.connectionId, payload);
+        console.log("CON ID", user_to.connectionId);
         await apiGateway
           .postToConnection({
             ConnectionId: user_to.connectionId,
@@ -145,8 +144,8 @@ module.exports.sendMessageHandler = async function (payload, meta) {
                 conversation: {
                   id: id_conversation,
                   last_message: payload.message,
-                  user: payload.user,
-                  user_to: payload.user_to,
+                  user: usersData.data.user,
+                  user_to: usersData.data.user_to,
                   id_user: payload.id_user,
                   id_user_to: payload.id_user_to,
                   room: payload.room,
@@ -161,6 +160,27 @@ module.exports.sendMessageHandler = async function (payload, meta) {
             ),
           })
           .promise();
+        const payloadNotification = {
+          app_id: process.env.ONE_SIGNAL_APP_ID,
+          name: `MENSAJES_WEB_PUSH`,
+          headings: {
+            en: `Mensaje de ${usersData.data.user.name}`
+          },
+          contents: {
+            en: payload.message,
+          },
+          include_external_user_ids: [payload.id_user_to.toString()],
+          channel_for_external_user_ids: "push",
+          isAnyWeb: true,
+          collapse_id: payload.room
+        }
+        await axios.post('https://onesignal.com/api/v1/notifications', payloadNotification, {
+          headers: {
+            'Authorization': `Basic ${process.env.ONE_SIGNAL_API_KEY}`,
+            'accept': 'application/json',
+            'content-type': 'application/json'
+          }
+        })
       } catch (error) {
         console.error(
           `Error trying to ws postToConnection on sendMessage ${JSON.stringify(
@@ -212,8 +232,8 @@ module.exports.sendMessageHandler = async function (payload, meta) {
       .collection(TABLE_CONNECTIONS)
       .find({ typeUser: "virtual" })
       .toArray();
-    items.forEach((userConnected) => {
-      apiGateway
+    items.forEach(async (userConnected) => {
+      await apiGateway
         .postToConnection({
           ConnectionId: userConnected.connectionId,
           Data: Buffer.from(
@@ -223,9 +243,6 @@ module.exports.sendMessageHandler = async function (payload, meta) {
           ),
         })
         .promise()
-        .then(() => {
-          console.log(`newClientInQueue to ${userConnected.connectionId}!`);
-        })
         .catch(() => {
           disconnectHandler(userConnected.connectionId)
             .then(() => {
