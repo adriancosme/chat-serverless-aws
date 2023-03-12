@@ -17,7 +17,7 @@ module.exports.connectHandler = async function (connectionId) {
     await db.collection(table).updateOne(filter, doc, { upsert: true });
     return true;
   } catch (error) {
-    console.error(`Error on $connect ${JSON.stringify(error)}`);
+    console.error(error);
     return false;
   }
 };
