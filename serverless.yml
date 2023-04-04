@@ -1,4 +1,4 @@
-service: aws-sincelove-chat
+service: aws-serverless-chat
 frameworkVersion: "3"
 package:
   exclude:
@@ -19,7 +19,7 @@ provider:
     DATABASE: "${self:custom.configFile.DATABASE}"
     API_KEY: "${self:custom.configFile.API_KEY}"
     API_MESSAGING: "${self:custom.configFile.API_MESSAGING}"
-    API_SINCELOVE: "${self:custom.configFile.API_SINCELOVE}"
+    API_SITE: "${self:custom.configFile.API_SITE}"
     ONE_SIGNAL_API_KEY: "${self:custom.configFile.ONE_SIGNAL_API_KEY}"
     ONE_SIGNAL_APP_ID: "${self:custom.configFile.ONE_SIGNAL_APP_ID}"
   websocketsApiRouteSelectionExpression: "$request.body.action"
